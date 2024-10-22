@@ -18,7 +18,9 @@
     "paths": {
       "@/components/*": ["components/*"],
       "@/lib/*": ["lib/*"],
-      "@/models/*": ["models/*"]
+      "@/models/*": ["models/*"],
+      "@/actions/*": ["actions/*"],
+      "@/utils/*": ["utils/*"]
     },
     "plugins": [
       {
