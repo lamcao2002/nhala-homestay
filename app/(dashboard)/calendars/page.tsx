@@ -13,10 +13,12 @@ import {
   Center,
   Modal,
   TextInput,
-  NumberInput
+  NumberInput,
+  MultiSelect
 } from '@mantine/core';
 
 import { DateTimePicker } from '@mantine/dates';
+import { useForm } from '@mantine/form';
 
 interface Transaction {
   roomId: number;
@@ -174,10 +176,24 @@ export default function Calendar() {
 
   const [modalOpened, setModalOpened] = useState(false); // Quản lý trạng thái modal
   const [newTransaction, setNewTransaction] = useState({
+    customerName: '',
+    customePhone: '',
     roomId: 1,
-    checkin: '',
-    checkout: '',
+    checkin: null,
+    checkout: null,
     amount: 0
+  });
+
+  const form = useForm({
+    mode: 'uncontrolled',
+    initialValues: {
+      customerName: '',
+      customePhone: '',
+      roomId: 1,
+      checkin: null,
+      checkout: null,
+      amount: 0
+    }
   });
 
   useEffect(() => {
@@ -196,9 +212,7 @@ export default function Calendar() {
     setStartDate(startOfToday());
   };
 
-  const handleInputChange = (
-    e: any
-  ) => {
+  const handleInputChange = (e: any) => {
     const { name, value } = e.target;
     setNewTransaction((prev) => ({ ...prev, [name]: value }));
   };
@@ -312,48 +326,62 @@ export default function Calendar() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            handleSubmit();
+            form.onSubmit((values) => console.log(values));
           }}
         >
+          <TextInput
+            label="Tên khách"
+            placeholder="Tên khách"
+            required
+            key={form.key('customerName')}
+            {...form.getInputProps('customerName')}
+          />
+          <TextInput
+            label="SDT"
+            placeholder="SDT"
+            required
+            key={form.key('customerPhone')}
+            {...form.getInputProps('customerPhone')}
+          />
+
           <DateTimePicker
             clearable
             defaultValue={new Date()}
             label="Check-in"
             placeholder="Check-in"
-            name="checkin"
-            // onChange={handleInputChange}
             dropdownType="modal"
             required
+            key={form.key('checkin')}
+            {...form.getInputProps('checkin')}
           />
           <DateTimePicker
             clearable
             defaultValue={new Date()}
             label="Check-out"
             placeholder="Check-out"
-            name="checkout"
-            // onChange={handleInputChange}
             dropdownType="modal"
             required
+            key={form.key('checkout')}
+            {...form.getInputProps('checkout')}
           />
           <NumberInput
             label="Số tiền"
-            value={newTransaction.amount}
-            // onChange={handleAmountChange}
+            // value={newTransaction.amount}
             thousandSeparator=","
             required
+            key={form.key('amount')}
+            {...form.getInputProps('amount')}
           />
-          <select
-            name="roomId"
-            value={newTransaction.roomId}
-            onChange={handleInputChange}
-            style={{ marginTop: '10px', marginBottom: '10px', width: '100%' }}
-          >
-            {rooms.map((room) => (
-              <option key={room.id} value={room.id}>
-                {room.name}
-              </option>
-            ))}
-          </select>
+          <MultiSelect
+            label="Chọn phòng"
+            placeholder="Chọn phòng"
+            data={rooms.map((room) => ({
+              label: room.name,
+              value: room.id.toString()
+            }))}
+            key={form.key('roomId')}
+            {...form.getInputProps('roomId')}
+          />
           <Group justify="right" mt="md">
             <Button type="submit">Tạo Giao Dịch</Button>
           </Group>
