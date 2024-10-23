@@ -2,11 +2,9 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { addDays, subDays, format, startOfToday, isSameDay } from 'date-fns';
+import { addDays, subDays, startOfToday, isSameDay } from 'date-fns';
 import {
   Button,
-  Grid,
-  Card,
   Text,
   Group,
   Container,
@@ -15,7 +13,6 @@ import {
   TextInput,
   NumberInput,
   MultiSelect,
-  Badge,
   ActionIcon
 } from '@mantine/core';
 
@@ -29,6 +26,7 @@ import {
 import { MoveLeft, MoveRight, Plus } from 'lucide-react';
 import { getRooms } from '@/actions/rooms/action';
 import { isRoomAvailableAllDay, isRoomAvailableByHour } from '@/utils/utils';
+import DayGrid from './dayGrid';
 
 // Kiểu dữ liệu phòng
 interface Room {
@@ -53,7 +51,9 @@ const generateFakeData = async (
   const endDate = addDays(startDate, 30);
   let revenueOf30Days: any[] = [];
   let transactions: any[] = [];
+  console.log('🚀 ~ generateFakeData:');
 
+  await new Promise((resolve) => setTimeout(resolve, 2000));
   try {
     revenueOf30Days = await getRevenueByDayForRange(startDate, endDate);
     transactions = await getTransactionsEachRoom(startDate, endDate);
@@ -67,7 +67,6 @@ const generateFakeData = async (
       isSameDay(new Date(item._id), date)
     )?.totalRevenue;
 
-    console.log('🚀 ~ rooms?.forEach ~ rooms:', rooms);
     let roomsAvailableAllDay: any[] = [];
     let roomsAvailableByHour: any[] = [];
 
@@ -110,6 +109,7 @@ export default function Calendar() {
 
   const [modalOpened, setModalOpened] = useState(false); // Quản lý trạng thái modal
   const [loading, setLoading] = useState(false);
+  const [loadingGrid, setLoadingGrid] = useState(true);
 
   const form = useForm({
     mode: 'uncontrolled',
@@ -136,8 +136,10 @@ export default function Calendar() {
 
   useEffect(() => {
     (async () => {
+      setLoadingGrid(true);
       const days = await generateFakeData(startDate, rooms);
       setDays(days);
+      setLoadingGrid(false);
     })();
   }, [startDate, rooms]);
 
@@ -179,6 +181,7 @@ export default function Calendar() {
     }
 
     setModalOpened(false); // Đóng modal sau khi gửi form
+    form.reset();
   };
 
   return (
@@ -197,7 +200,6 @@ export default function Calendar() {
       </Center>
 
       {/* Nút mũi tên trái/phải */}
-      
       <ActionIcon
         variant="filled"
         size="xl"
@@ -221,38 +223,7 @@ export default function Calendar() {
       </ActionIcon>
 
       {/* Grid Responsive: 3 cột trên mobile, 5 cột trên desktop */}
-      <Grid gutter="md" mt={'md'}>
-        {days.map(
-          ({ date, status, revenue, roomsAvailable, hourlyRoomsAvailable }) => (
-            <Grid.Col key={date.toISOString()} span={{ base: 6, md: 2 }}>
-              <Card
-                shadow="sm"
-                padding="lg"
-                style={{
-                  backgroundColor:
-                    status === 'allDay'
-                      ? '#69DB7C'
-                      : status === 'byHour'
-                        ? '#FFE066'
-                        : '#E64F57'
-                }}
-                onClick={() => router.push(`/calendars/${date.getDay()}`)}
-              >
-                <Text size="lg" weight={600} className="self-center">
-                  {format(date, 'dd/MM/yyyy')}
-                </Text>
-                <Text size="sm" mt="xs">
-                  Phòng trống: {roomsAvailable.join(',')}
-                </Text>
-                <Text size="sm">Phòng theo giờ: {hourlyRoomsAvailable.join(',')}</Text>
-                <Badge color="blue" size="md" mt={'sm'} className="self-center">
-                  {revenue.toLocaleString()} VND
-                </Badge>
-              </Card>
-            </Grid.Col>
-          )
-        )}
-      </Grid>
+      <DayGrid days={days} loading={loadingGrid} />
 
       {/* Nút thêm giao dịch sticky ở góc phải */}
       <ActionIcon
@@ -270,7 +241,6 @@ export default function Calendar() {
       <Modal
         opened={modalOpened}
         onClose={() => {
-          // form.reset();
           setModalOpened(false);
         }}
         title="Tạo Giao Dịch Mới"
