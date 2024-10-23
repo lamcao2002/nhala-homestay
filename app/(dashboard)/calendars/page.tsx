@@ -51,9 +51,7 @@ const generateFakeData = async (
   const endDate = addDays(startDate, 30);
   let revenueOf30Days: any[] = [];
   let transactions: any[] = [];
-  console.log('🚀 ~ generateFakeData:');
 
-  await new Promise((resolve) => setTimeout(resolve, 2000));
   try {
     revenueOf30Days = await getRevenueByDayForRange(startDate, endDate);
     transactions = await getTransactionsEachRoom(startDate, endDate);

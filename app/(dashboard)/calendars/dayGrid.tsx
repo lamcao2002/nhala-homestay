@@ -28,7 +28,7 @@ export default function DayGrid({
           .fill(0)
           .map((item, index) => (
             <Grid.Col key={index} span={{ base: 6, md: 2 }} className="h-52">
-              <div className="h-full w-full flex flex-col justify-around">
+              <div className="flex flex-col justify-around w-full h-full">
                 <Skeleton height={20} radius="xl" />
                 <Skeleton height={20} radius="xl" />
                 <Skeleton height={20} radius="xl" />
@@ -50,7 +50,7 @@ export default function DayGrid({
             className="h-52"
           >
             {loading ? (
-              <div className="h-full w-full flex flex-col justify-around">
+              <div className="flex flex-col justify-around w-full h-full">
                 <Skeleton height={20} radius="xl" />
                 <Skeleton height={20} radius="xl" />
                 <Skeleton height={20} radius="xl" />
@@ -60,7 +60,7 @@ export default function DayGrid({
               <Card
                 shadow="sm"
                 padding="lg"
-                className="h-full justify-between"
+                className="justify-between h-full"
                 style={{
                   backgroundColor:
                     status === 'allDay'
@@ -69,7 +69,7 @@ export default function DayGrid({
                         ? '#FFE066'
                         : '#E64F57'
                 }}
-                onClick={() => router.push(`/calendars/${date.getDay()}`)}
+                onClick={() => router.push(`/calendars/${date.getDay()}?date=${date.toDateString()}`)}
               >
                 <Text size="lg" weight={600} className="self-center">
                   {format(date, 'dd/MM/yyyy')}
