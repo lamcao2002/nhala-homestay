@@ -12,7 +12,6 @@ export default {
     ]
   },
   experimental: {
-    optimizePackageImports: ['@mantine/core', '@mantine/hooks'],
-    instrumentationHook: true,
+    optimizePackageImports: ['@mantine/core', '@mantine/hooks']
   },
 };
