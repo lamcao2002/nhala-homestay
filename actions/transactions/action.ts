@@ -1,14 +1,17 @@
 'use server';
 
+import dbConnect from '@/lib/db';
 import Transaction from '@/models/transaction';
 
 export async function createTransaction(data: any) {
+  await dbConnect();
   const { customerName, customerPhone, checkin, checkout, roomIds, amount } = data;
   const result = await Transaction.create({ customerName, customerPhone, checkin, checkout, roomIds, amount });
   return result.toObject();
 }
 
 export async function getRevenueByDayForRange(startDate: Date, endDate: Date) {
+  await dbConnect();
   const result = await Transaction.aggregate([
     {
       $match: {
@@ -36,6 +39,8 @@ export async function getRevenueByDayForRange(startDate: Date, endDate: Date) {
 }
 
 export async function getTransactionsEachRoom(startDate: Date, endDate: Date) {
+  await dbConnect();
+
   const result = await Transaction.aggregate([
     {
       $match: {
