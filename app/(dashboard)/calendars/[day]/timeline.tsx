@@ -54,7 +54,7 @@ const Timeline: FC<{ bookings: ITransaction[]; date: Date }> = ({
   date
 }) => {
   console.log("🚀 ~ date:", date)
-  console.log("🚀 ~ bookings:", bookings)
+  // console.log("🚀 ~ bookings:", bookings)
   const startDay = startOfDay(date).getTime();
   const endDay = endOfDay(date).getTime();
 

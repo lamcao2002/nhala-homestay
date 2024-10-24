@@ -132,10 +132,13 @@ export const getTransactionsEachRoom = unstable_cache(
 
 export const getTransactionsGroupedByRoom = unstable_cache(
   async (date: Date) => {
+    console.log("🚀 ~ date:", date)
     await dbConnect();
 
     const start = startOfDay(date); // 00:00 của ngày được chọn
+    console.log("🚀 ~ start:", start)
     const end = endOfDay(date); // 23:59:59 của ngày được chọn
+    console.log("🚀 ~ end:", end)
 
     const result = await Transaction.aggregate([
       {

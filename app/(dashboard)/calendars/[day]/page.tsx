@@ -47,6 +47,7 @@ interface TransactionsByRoom {
 export default function DayDetails() {
   const router = useRouter();
   const dateTarget = useSearchParams().get('date');
+  console.log('Timezone:', Intl.DateTimeFormat().resolvedOptions().timeZone);
   console.log("🚀 ~ DayDetails ~ dateTarget:", dateTarget)
   const dateFormat = dateTarget ? new Date(dateTarget) : new Date();
   console.log("🚀 ~ DayDetails ~ dateFormat:", dateFormat)
@@ -123,7 +124,7 @@ export default function DayDetails() {
   }, []);
 
   useEffect(() => {
-    if (rooms.length && transactionsByRoom.length) {
+    if (rooms.length && transactionsByRoom) {
       setDataCombine([]);
       rooms.forEach((room) => {
         const newItem = {
