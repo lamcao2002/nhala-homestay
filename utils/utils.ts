@@ -69,3 +69,22 @@ export function isRoomAvailableByHour(
 
   return finalGapInHours >= 3;
 }
+
+export const getDayRangeWithOffset = (date: Date, offsetInHours: number = 7) => {
+  // Chuyển đổi thời gian theo offset của timezone (ví dụ: GMT+7 là +7 giờ)
+  const offsetInMilliseconds = offsetInHours * 60 * 60 * 1000;
+
+  // Tính thời gian bắt đầu ngày với offset
+  const start = new Date(date.getTime() + offsetInMilliseconds);
+  start.setUTCHours(0, 0, 0, 0); // Đặt về 00:00:00
+
+  // Tính thời gian kết thúc ngày với offset
+  const end = new Date(date.getTime() + offsetInMilliseconds);
+  end.setUTCHours(23, 59, 59, 999); // Đặt về 23:59:59.999
+
+  // Chuyển ngược lại về UTC để query MongoDB
+  const utcStart = new Date(start.getTime() - offsetInMilliseconds);
+  const utcEnd = new Date(end.getTime() - offsetInMilliseconds);
+
+  return { start: utcStart, end: utcEnd };
+};

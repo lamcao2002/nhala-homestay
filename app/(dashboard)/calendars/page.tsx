@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { addDays, subDays, startOfToday, isSameDay } from 'date-fns';
 import {
@@ -46,7 +45,7 @@ interface DayInfo {
 }
 
 // Tạo dữ liệu giả cho 30 ngày
-const generateFakeData = async (
+const generateData = async (
   startDate: Date,
   rooms: Room[]
 ): Promise<DayInfo[]> => {
@@ -108,8 +107,6 @@ const generateFakeData = async (
 };
 
 export default function Calendar() {
-  const router = useRouter();
-
   const [startDate, setStartDate] = useState(startOfToday());
   const [days, setDays] = useState<DayInfo[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -142,10 +139,10 @@ export default function Calendar() {
   }, []);
 
   useEffect(() => {
-    if (rooms) {
+    if (rooms.length) {
       (async () => {
         setLoadingGrid(true);
-        const days = await generateFakeData(startDate, rooms);
+        const days = await generateData(startDate, rooms);
         setDays(days);
         setLoadingGrid(false);
       })();
@@ -178,7 +175,7 @@ export default function Calendar() {
       });
 
       if (res) {
-        const days = await generateFakeData(startDate, rooms);
+        const days = await generateData(startDate, rooms);
         setDays(days);
         setLoading(false);
       } else {

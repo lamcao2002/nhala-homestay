@@ -1,6 +1,7 @@
 import { ITransaction } from '@/models/transaction';
+import { getDayRangeWithOffset } from '@/utils/utils';
 import { Popover, Text } from '@mantine/core';
-import { differenceInHours, endOfDay, formatDate, startOfDay } from 'date-fns';
+import { differenceInHours, formatDate } from 'date-fns';
 import { FC } from 'react';
 
 const getPercentage = (time: Date, startOfDay: number) => {
@@ -53,8 +54,10 @@ const Timeline: FC<{ bookings: ITransaction[]; date: Date }> = ({
   bookings,
   date
 }) => {
-  const startDay = startOfDay(date).getTime();
-  const endDay = endOfDay(date).getTime();
+  const { start, end } = getDayRangeWithOffset(date);
+
+  const startDay = start.getTime();
+  const endDay = end.getTime();
 
   const emptySlots = getEmptySlots(bookings, startDay, endDay);
 
