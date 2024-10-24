@@ -47,10 +47,7 @@ interface TransactionsByRoom {
 export default function DayDetails() {
   const router = useRouter();
   const dateTarget = useSearchParams().get('date');
-  console.log('Timezone:', Intl.DateTimeFormat().resolvedOptions().timeZone);
-  console.log("🚀 ~ DayDetails ~ dateTarget:", dateTarget)
   const dateFormat = dateTarget ? new Date(dateTarget) : new Date();
-  console.log("🚀 ~ DayDetails ~ dateFormat:", dateFormat)
 
   const [selectedRoom, setSelectedRoom] = useState<TransactionsByRoom | null>(
     null
@@ -291,8 +288,6 @@ export default function DayDetails() {
               form.setFieldValue('checkin', (prev) =>
                 set(prev, { hours: getHours(time), minutes: getMinutes(time) })
               );
-
-              console.log(form.getValues());
             }}
           />
           <TimeInput
