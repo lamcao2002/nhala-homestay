@@ -47,7 +47,9 @@ interface TransactionsByRoom {
 export default function DayDetails() {
   const router = useRouter();
   const dateTarget = useSearchParams().get('date');
+  console.log("🚀 ~ DayDetails ~ dateTarget:", dateTarget)
   const dateFormat = dateTarget ? new Date(dateTarget) : new Date();
+  console.log("🚀 ~ DayDetails ~ dateFormat:", dateFormat)
 
   const [selectedRoom, setSelectedRoom] = useState<TransactionsByRoom | null>(
     null
