@@ -53,6 +53,7 @@ const Timeline: FC<{ bookings: ITransaction[]; date: Date }> = ({
   bookings,
   date
 }) => {
+  console.log("🚀 ~ bookings:", bookings)
   const startDay = startOfDay(date).getTime();
   const endDay = endOfDay(date).getTime();
 
@@ -64,10 +65,12 @@ const Timeline: FC<{ bookings: ITransaction[]; date: Date }> = ({
     <div className="relative w-full bg-gray-200 h-9">
       {bookings?.map((booking, index) => {
         const left = Math.max(0, getPercentage(booking.checkin, startDay)); // Không cho phần âm
+        console.log("🚀 ~ {bookings?.map ~ left:", left)
         const width = Math.min(
           100 - left,
           getPercentage(booking.checkout, startDay) - left
         ); // Không cho vượt quá 100%
+        console.log("🚀 ~ {bookings?.map ~ width:", width)
 
         const isCrossingDayCheckin = booking.checkin.getTime() < startDay;
 
@@ -102,14 +105,20 @@ const Timeline: FC<{ bookings: ITransaction[]; date: Date }> = ({
 
       {emptySlots.map((slot, index) => {
         const left = getPercentage(new Date(slot.start), startDay);
+        console.log("🚀 ~ {emptySlots.map ~ left:", left)
         const width =
           getPercentage(new Date(slot.end), startDay) -
           getPercentage(new Date(slot.start), startDay);
+
+        console.log("🚀 ~ {emptySlots.map ~ width:", width)
+
 
         const durationHours = differenceInHours(
           new Date(slot.end),
           new Date(slot.start)
         );
+
+        console.log("🚀 ~ durationHours:", durationHours)
 
         return (
           <Popover position="top" withArrow shadow="md">
