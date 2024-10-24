@@ -123,7 +123,7 @@ export default function DayDetails() {
   }, []);
 
   useEffect(() => {
-    if (rooms && transactionsByRoom) {
+    if (rooms.length && transactionsByRoom.length) {
       setDataCombine([]);
       rooms.forEach((room) => {
         const newItem = {
@@ -152,7 +152,7 @@ export default function DayDetails() {
       </Center>
 
       <Group justify="center" mb="md">
-        <Button onClick={() => router.push('/calendars')}>Quay lại Lịch</Button>
+        <Button onClick={() => router.replace('/calendars')}>Quay lại Lịch</Button>
         <Popover width={200} position="top" withArrow shadow="md">
           <Popover.Target>
             <Button>Chú thích</Button>
