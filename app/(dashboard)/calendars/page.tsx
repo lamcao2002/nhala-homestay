@@ -2,11 +2,9 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { addDays, subDays, format, startOfToday, isSameDay } from 'date-fns';
+import { addDays, subDays, startOfToday, isSameDay } from 'date-fns';
 import {
   Button,
-  Grid,
-  Card,
   Text,
   Group,
   Container,
@@ -15,7 +13,6 @@ import {
   TextInput,
   NumberInput,
   MultiSelect,
-  Badge,
   ActionIcon
 } from '@mantine/core';
 
@@ -24,11 +21,13 @@ import { useForm } from '@mantine/form';
 import {
   createTransaction,
   getRevenueByDayForRange,
+  getTransactionsCountByDay,
   getTransactionsEachRoom
 } from '@/actions/transactions/action';
 import { MoveLeft, MoveRight, Plus } from 'lucide-react';
 import { getRooms } from '@/actions/rooms/action';
 import { isRoomAvailableAllDay, isRoomAvailableByHour } from '@/utils/utils';
+import DayGrid from './dayGrid';
 
 // Kiểu dữ liệu phòng
 interface Room {
@@ -43,6 +42,7 @@ interface DayInfo {
   revenue: number;
   roomsAvailable: string[];
   hourlyRoomsAvailable: string[];
+  count: number;
 }
 
 // Tạo dữ liệu giả cho 30 ngày
@@ -53,10 +53,12 @@ const generateFakeData = async (
   const endDate = addDays(startDate, 30);
   let revenueOf30Days: any[] = [];
   let transactions: any[] = [];
+  let transactionsCountByDay: any[] = [];
 
   try {
     revenueOf30Days = await getRevenueByDayForRange(startDate, endDate);
     transactions = await getTransactionsEachRoom(startDate, endDate);
+    transactionsCountByDay = await getTransactionsCountByDay(startDate, endDate);
   } catch (error) {
     console.error('Lỗi khi tính doanh thu:', error);
   }
@@ -67,7 +69,10 @@ const generateFakeData = async (
       isSameDay(new Date(item._id), date)
     )?.totalRevenue;
 
-    console.log('🚀 ~ rooms?.forEach ~ rooms:', rooms);
+    const transCount = transactionsCountByDay.find((item) =>
+      isSameDay(new Date(item._id), date)
+    )?.transactionCount || 0;
+
     let roomsAvailableAllDay: any[] = [];
     let roomsAvailableByHour: any[] = [];
 
@@ -96,7 +101,8 @@ const generateFakeData = async (
       status: status,
       revenue: revenueDaily ?? 0,
       roomsAvailable: roomsAvailableAllDay,
-      hourlyRoomsAvailable: roomsAvailableByHour
+      hourlyRoomsAvailable: roomsAvailableByHour,
+      count: transCount
     } as DayInfo;
   });
 };
@@ -110,6 +116,7 @@ export default function Calendar() {
 
   const [modalOpened, setModalOpened] = useState(false); // Quản lý trạng thái modal
   const [loading, setLoading] = useState(false);
+  const [loadingGrid, setLoadingGrid] = useState(true);
 
   const form = useForm({
     mode: 'uncontrolled',
@@ -117,9 +124,9 @@ export default function Calendar() {
       customerName: '',
       customerPhone: '',
       roomIds: [],
-      checkin: null,
-      checkout: null,
-      amount: 0
+      checkin: new Date(),
+      checkout: new Date(),
+      amount: null
     }
   });
 
@@ -135,10 +142,14 @@ export default function Calendar() {
   }, []);
 
   useEffect(() => {
-    (async () => {
-      const days = await generateFakeData(startDate, rooms);
-      setDays(days);
-    })();
+    if (rooms) {
+      (async () => {
+        setLoadingGrid(true);
+        const days = await generateFakeData(startDate, rooms);
+        setDays(days);
+        setLoadingGrid(false);
+      })();
+    }
   }, [startDate, rooms]);
 
   const handlePrev = () => {
@@ -179,6 +190,7 @@ export default function Calendar() {
     }
 
     setModalOpened(false); // Đóng modal sau khi gửi form
+    form.reset();
   };
 
   return (
@@ -197,7 +209,6 @@ export default function Calendar() {
       </Center>
 
       {/* Nút mũi tên trái/phải */}
-      
       <ActionIcon
         variant="filled"
         size="xl"
@@ -221,38 +232,7 @@ export default function Calendar() {
       </ActionIcon>
 
       {/* Grid Responsive: 3 cột trên mobile, 5 cột trên desktop */}
-      <Grid gutter="md" mt={'md'}>
-        {days.map(
-          ({ date, status, revenue, roomsAvailable, hourlyRoomsAvailable }) => (
-            <Grid.Col key={date.toISOString()} span={{ base: 6, md: 2 }}>
-              <Card
-                shadow="sm"
-                padding="lg"
-                style={{
-                  backgroundColor:
-                    status === 'allDay'
-                      ? '#69DB7C'
-                      : status === 'byHour'
-                        ? '#FFE066'
-                        : '#E64F57'
-                }}
-                onClick={() => router.push(`/calendars/${date.getDay()}`)}
-              >
-                <Text size="lg" weight={600} className="self-center">
-                  {format(date, 'dd/MM/yyyy')}
-                </Text>
-                <Text size="sm" mt="xs">
-                  Phòng trống: {roomsAvailable.join(',')}
-                </Text>
-                <Text size="sm">Phòng theo giờ: {hourlyRoomsAvailable.join(',')}</Text>
-                <Badge color="blue" size="md" mt={'sm'} className="self-center">
-                  {revenue.toLocaleString()} VND
-                </Badge>
-              </Card>
-            </Grid.Col>
-          )
-        )}
-      </Grid>
+      <DayGrid days={days} loading={loadingGrid} />
 
       {/* Nút thêm giao dịch sticky ở góc phải */}
       <ActionIcon
@@ -270,10 +250,9 @@ export default function Calendar() {
       <Modal
         opened={modalOpened}
         onClose={() => {
-          // form.reset();
           setModalOpened(false);
         }}
-        title="Tạo Giao Dịch Mới"
+        title="Tạo Booking Mới"
         fullScreen
       >
         <form
@@ -288,6 +267,7 @@ export default function Calendar() {
             required
             key={form.key('customerName')}
             {...form.getInputProps('customerName')}
+            size="md"
           />
           <TextInput
             label="SDT"
@@ -295,6 +275,8 @@ export default function Calendar() {
             required
             key={form.key('customerPhone')}
             {...form.getInputProps('customerPhone')}
+            size="md"
+
           />
 
           <DateTimePicker
@@ -306,6 +288,7 @@ export default function Calendar() {
             required
             key={form.key('checkin')}
             {...form.getInputProps('checkin')}
+            size="md"
           />
           <DateTimePicker
             clearable
@@ -316,6 +299,7 @@ export default function Calendar() {
             required
             key={form.key('checkout')}
             {...form.getInputProps('checkout')}
+            size="md"
           />
           <NumberInput
             label="Số tiền"
@@ -324,6 +308,7 @@ export default function Calendar() {
             required
             key={form.key('amount')}
             {...form.getInputProps('amount')}
+            size="md"
           />
           <MultiSelect
             label="Chọn phòng"
@@ -334,10 +319,11 @@ export default function Calendar() {
             }))}
             key={form.key('roomIds')}
             {...form.getInputProps('roomIds')}
+            size="md"
           />
           <Group justify="right" mt="md">
-            <Button type="submit" loading={loading}>
-              Tạo Giao Dịch
+            <Button type="submit" loading={loading} size='md'>
+              Tạo Booking
             </Button>
           </Group>
         </form>

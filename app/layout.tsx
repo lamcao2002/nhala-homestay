@@ -7,9 +7,9 @@ import '@mantine/dates/styles.css';
 import { ColorSchemeScript, MantineProvider } from '@mantine/core';
 
 export const metadata = {
-  title: 'Next.js App Router + NextAuth + Tailwind CSS',
+  title: 'Nhala Homestay',
   description:
-    'A user admin dashboard configured with Next.js, Postgres, NextAuth, Tailwind CSS, TypeScript, and Prettier.'
+    'homestay nhala'
 };
 
 // export default function RootLayout({

@@ -64,6 +64,16 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
   }
+
+  .bg-unavailable-booking {
+    background: repeating-linear-gradient(
+      45deg,
+      #e48231 0px,
+      #e48231 5px,
+      #ffffff 5px,
+      #ffffff 10px
+    );
+  }
 }
 
 @layer base {
