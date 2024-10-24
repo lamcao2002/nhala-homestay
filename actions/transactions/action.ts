@@ -2,6 +2,7 @@
 
 import dbConnect from '@/lib/db';
 import Transaction from '@/models/transaction';
+import { getDayRangeWithOffset } from '@/utils/utils';
 import { startOfDay, endOfDay } from 'date-fns';
 import { unstable_cache } from 'next/cache';
 
@@ -130,106 +131,113 @@ export const getTransactionsEachRoom = unstable_cache(
 //   return JSON.parse(JSON.stringify(result));
 // }
 
-export const getTransactionsGroupedByRoom = unstable_cache(
-  async (date: Date) => {
-    console.log("🚀 ~ date:", date)
-    await dbConnect();
+// export const getTransactionsGroupedByRoom = unstable_cache(
+//   async (date: Date) => {
+//     console.log("🚀 ~ date:", date)
+//     await dbConnect();
 
-    const start = startOfDay(date); // 00:00 của ngày được chọn
-    console.log("🚀 ~ start:", start)
-    const end = endOfDay(date); // 23:59:59 của ngày được chọn
-    console.log("🚀 ~ end:", end)
+//     const start = startOfDay(date); // 00:00 của ngày được chọn
+//     console.log("🚀 ~ start:", start)
+//     const end = endOfDay(date); // 23:59:59 của ngày được chọn
+//     console.log("🚀 ~ end:", end)
 
-    const result = await Transaction.aggregate([
-      {
-        $match: {
-          $or: [
-            { checkin: { $gte: start, $lte: end } }, // Giao dịch có check-in trong ngày
-            { checkout: { $gte: start, $lte: end } } // Giao dịch có check-out trong ngày
-          ]
-        }
-      },
-      {
-        // Tách roomIds để group theo từng phòng
-        $unwind: {
-          path: '$roomIds',
-          preserveNullAndEmptyArrays: true
-        }
-      },
-      {
-        $group: {
-          _id: '$roomIds', // Group theo roomId
-          transactions: { $push: '$$ROOT' }, // Đẩy toàn bộ giao dịch vào mảng
-          totalAmount: { $sum: '$amount' } // Tổng doanh thu cho từng phòng
-        }
-      }
-    ]);
+//     const result = await Transaction.aggregate([
+//       {
+//         $match: {
+//           $or: [
+//             { checkin: { $gte: start, $lte: end } }, // Giao dịch có check-in trong ngày
+//             { checkout: { $gte: start, $lte: end } } // Giao dịch có check-out trong ngày
+//           ]
+//         }
+//       },
+//       {
+//         // Tách roomIds để group theo từng phòng
+//         $unwind: {
+//           path: '$roomIds',
+//           preserveNullAndEmptyArrays: true
+//         }
+//       },
+//       {
+//         $group: {
+//           _id: '$roomIds', // Group theo roomId
+//           transactions: { $push: '$$ROOT' }, // Đẩy toàn bộ giao dịch vào mảng
+//           totalAmount: { $sum: '$amount' } // Tổng doanh thu cho từng phòng
+//         }
+//       }
+//     ]);
 
-    return JSON.parse(JSON.stringify(result));
-  },
-  ['transactionsGroupedByRoom'],
-  { revalidate: 3600, tags: ['transactionsGroupedByRoom'] }
-);
+//     return JSON.parse(JSON.stringify(result));
+//   },
+//   ['transactionsGroupedByRoom'],
+//   { revalidate: 3600, tags: ['transactionsGroupedByRoom'] }
+// );
 
 // Hàm lấy danh sách giao dịch group theo phòng
-// export async function getTransactionsGroupedByRoom(date: Date) {
-//   await dbConnect();
+export async function getTransactionsGroupedByRoom(date: Date) {
+  console.log('🚀 ~ getTransactionsGroupedByRoom ~ date:', date);
+  await dbConnect();
+  const { start, end } = getDayRangeWithOffset(date);
 
-//   const start = startOfDay(date); // 00:00 của ngày được chọn
-//   const end = endOfDay(date); // 23:59:59 của ngày được chọn
+  // const start = startOfDay(date); // 00:00 của ngày được chọn
+  console.log('🚀 ~ getTransactionsGroupedByRoom ~ start:', start);
+  // const end = endOfDay(date); // 23:59:59 của ngày được chọn
+  console.log('🚀 ~ getTransactionsGroupedByRoom ~ end:', end);
 
-//   const result = await Transaction.aggregate([
-//     {
-//       $match: {
-//         $or: [
-//           { checkin: { $gte: start, $lte: end } }, // Giao dịch có check-in trong ngày
-//           { checkout: { $gte: start, $lte: end } } // Giao dịch có check-out trong ngày
-//         ]
-//       }
-//     },
-//     {
-//       // Tách roomIds để group theo từng phòng
-//       $unwind: {
-//         path: '$roomIds',
-//         preserveNullAndEmptyArrays: true
-//       }
-//     },
-//     {
-//       $group: {
-//         _id: '$roomIds', // Group theo roomId
-//         transactions: { $push: '$$ROOT' }, // Đẩy toàn bộ giao dịch vào mảng
-//         totalAmount: { $sum: '$amount' } // Tổng doanh thu cho từng phòng
-//       }
-//     }
-//     // {
-//     //   $lookup: {
-//     //     from: 'rooms', // Tên collection Room trong MongoDB
-//     //     localField: '_id', // roomId trong group
-//     //     foreignField: 'roomId', // _id của Room
-//     //     as: 'roomInfo', // Đặt tên cho mảng kết quả
-//     //   },
-//     // },
-//     // {
-//     //   // Giải nén roomInfo để lấy tên phòng
-//     //   $unwind: {
-//     //     path: '$roomInfo',
-//     //     preserveNullAndEmptyArrays: true
-//     //   }
-//     // },
-//     // {
-//     //   $sort: { '_id': 1 }, // Sắp xếp theo roomId tăng dần
-//     // },
-//   ]);
+  const result = await Transaction.aggregate([
+    {
+      $match: {
+        $or: [
+          { checkin: { $gte: start, $lte: end } }, // Giao dịch có check-in trong ngày
+          { checkout: { $gte: start, $lte: end } } // Giao dịch có check-out trong ngày
+        ]
+      }
+    },
+    {
+      // Tách roomIds để group theo từng phòng
+      $unwind: {
+        path: '$roomIds',
+        preserveNullAndEmptyArrays: true
+      }
+    },
+    {
+      $group: {
+        _id: '$roomIds', // Group theo roomId
+        transactions: { $push: '$$ROOT' }, // Đẩy toàn bộ giao dịch vào mảng
+        totalAmount: { $sum: '$amount' } // Tổng doanh thu cho từng phòng
+      }
+    }
+    // {
+    //   $lookup: {
+    //     from: 'rooms', // Tên collection Room trong MongoDB
+    //     localField: '_id', // roomId trong group
+    //     foreignField: 'roomId', // _id của Room
+    //     as: 'roomInfo', // Đặt tên cho mảng kết quả
+    //   },
+    // },
+    // {
+    //   // Giải nén roomInfo để lấy tên phòng
+    //   $unwind: {
+    //     path: '$roomInfo',
+    //     preserveNullAndEmptyArrays: true
+    //   }
+    // },
+    // {
+    //   $sort: { '_id': 1 }, // Sắp xếp theo roomId tăng dần
+    // },
+  ]);
 
-//   return JSON.parse(JSON.stringify(result));
-// }
+  return JSON.parse(JSON.stringify(result));
+}
 
 export const getTransactionsCountByDay = unstable_cache(
   async (startDate: Date, endDate: Date) => {
     await dbConnect();
 
-    const start = startOfDay(startDate); // 00:00:00 của startDate
-    const end = endOfDay(endDate); // 23:59:59 của endDate
+  const { start } = getDayRangeWithOffset(startDate);
+  const { end } = getDayRangeWithOffset(endDate);
+
+    // const start = startOfDay(startDate); // 00:00:00 của startDate
+    // const end = endOfDay(endDate); // 23:59:59 của endDate
 
     const result = await Transaction.aggregate([
       {
