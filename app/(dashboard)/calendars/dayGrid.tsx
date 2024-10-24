@@ -1,4 +1,4 @@
-import { Badge, Card, Grid, Skeleton, Text } from '@mantine/core';
+import { Badge, Card, Grid, Indicator, Skeleton, Text } from '@mantine/core';
 import { format } from 'date-fns';
 
 import { useRouter } from 'next/navigation';
@@ -9,6 +9,7 @@ interface DayInfo {
   revenue: number;
   roomsAvailable: string[];
   hourlyRoomsAvailable: string[];
+  count: number;
 }
 
 export default function DayGrid({
@@ -21,7 +22,6 @@ export default function DayGrid({
   const router = useRouter();
 
   if (!days.length) {
-
     return (
       <Grid gutter="md" mt={'md'}>
         {Array(30)
@@ -43,7 +43,7 @@ export default function DayGrid({
   return (
     <Grid gutter="md" mt={'md'}>
       {days.map(
-        ({ date, status, revenue, roomsAvailable, hourlyRoomsAvailable }) => (
+        ({ date, status, revenue, roomsAvailable, hourlyRoomsAvailable, count }) => (
           <Grid.Col
             key={date.toISOString()}
             span={{ base: 6, md: 2 }}
@@ -69,11 +69,17 @@ export default function DayGrid({
                         ? '#FFE066'
                         : '#E64F57'
                 }}
-                onClick={() => router.push(`/calendars/${date.getDay()}?date=${date.toDateString()}`)}
+                onClick={() =>
+                  router.push(
+                    `/calendars/${date.getDay()}?date=${date.toDateString()}`
+                  )
+                }
               >
-                <Text size="lg" weight={600} className="self-center">
-                  {format(date, 'dd/MM/yyyy')}
-                </Text>
+                <Indicator inline label={count} size={28} >
+                  <Text size="lg" weight={600} className="self-center">
+                    {format(date, 'dd/MM/yyyy')}
+                  </Text>
+                </Indicator>
                 <Text size="sm" mt="xs">
                   Phòng trống: {roomsAvailable.join(',')}
                 </Text>

@@ -21,6 +21,7 @@ import { useForm } from '@mantine/form';
 import {
   createTransaction,
   getRevenueByDayForRange,
+  getTransactionsCountByDay,
   getTransactionsEachRoom
 } from '@/actions/transactions/action';
 import { MoveLeft, MoveRight, Plus } from 'lucide-react';
@@ -41,6 +42,7 @@ interface DayInfo {
   revenue: number;
   roomsAvailable: string[];
   hourlyRoomsAvailable: string[];
+  count: number;
 }
 
 // Tạo dữ liệu giả cho 30 ngày
@@ -51,10 +53,12 @@ const generateFakeData = async (
   const endDate = addDays(startDate, 30);
   let revenueOf30Days: any[] = [];
   let transactions: any[] = [];
+  let transactionsCountByDay: any[] = [];
 
   try {
     revenueOf30Days = await getRevenueByDayForRange(startDate, endDate);
     transactions = await getTransactionsEachRoom(startDate, endDate);
+    transactionsCountByDay = await getTransactionsCountByDay(startDate, endDate);
   } catch (error) {
     console.error('Lỗi khi tính doanh thu:', error);
   }
@@ -64,6 +68,10 @@ const generateFakeData = async (
     const revenueDaily = revenueOf30Days.find((item) =>
       isSameDay(new Date(item._id), date)
     )?.totalRevenue;
+
+    const transCount = transactionsCountByDay.find((item) =>
+      isSameDay(new Date(item._id), date)
+    )?.transactionCount || 0;
 
     let roomsAvailableAllDay: any[] = [];
     let roomsAvailableByHour: any[] = [];
@@ -93,7 +101,8 @@ const generateFakeData = async (
       status: status,
       revenue: revenueDaily ?? 0,
       roomsAvailable: roomsAvailableAllDay,
-      hourlyRoomsAvailable: roomsAvailableByHour
+      hourlyRoomsAvailable: roomsAvailableByHour,
+      count: transCount
     } as DayInfo;
   });
 };
@@ -115,9 +124,9 @@ export default function Calendar() {
       customerName: '',
       customerPhone: '',
       roomIds: [],
-      checkin: null,
-      checkout: null,
-      amount: 0
+      checkin: new Date(),
+      checkout: new Date(),
+      amount: null
     }
   });
 
@@ -133,12 +142,14 @@ export default function Calendar() {
   }, []);
 
   useEffect(() => {
-    (async () => {
-      setLoadingGrid(true);
-      const days = await generateFakeData(startDate, rooms);
-      setDays(days);
-      setLoadingGrid(false);
-    })();
+    if (rooms) {
+      (async () => {
+        setLoadingGrid(true);
+        const days = await generateFakeData(startDate, rooms);
+        setDays(days);
+        setLoadingGrid(false);
+      })();
+    }
   }, [startDate, rooms]);
 
   const handlePrev = () => {
@@ -241,7 +252,7 @@ export default function Calendar() {
         onClose={() => {
           setModalOpened(false);
         }}
-        title="Tạo Giao Dịch Mới"
+        title="Tạo Booking Mới"
         fullScreen
       >
         <form
@@ -256,6 +267,7 @@ export default function Calendar() {
             required
             key={form.key('customerName')}
             {...form.getInputProps('customerName')}
+            size="md"
           />
           <TextInput
             label="SDT"
@@ -263,6 +275,8 @@ export default function Calendar() {
             required
             key={form.key('customerPhone')}
             {...form.getInputProps('customerPhone')}
+            size="md"
+
           />
 
           <DateTimePicker
@@ -274,6 +288,7 @@ export default function Calendar() {
             required
             key={form.key('checkin')}
             {...form.getInputProps('checkin')}
+            size="md"
           />
           <DateTimePicker
             clearable
@@ -284,6 +299,7 @@ export default function Calendar() {
             required
             key={form.key('checkout')}
             {...form.getInputProps('checkout')}
+            size="md"
           />
           <NumberInput
             label="Số tiền"
@@ -292,6 +308,7 @@ export default function Calendar() {
             required
             key={form.key('amount')}
             {...form.getInputProps('amount')}
+            size="md"
           />
           <MultiSelect
             label="Chọn phòng"
@@ -302,10 +319,11 @@ export default function Calendar() {
             }))}
             key={form.key('roomIds')}
             {...form.getInputProps('roomIds')}
+            size="md"
           />
           <Group justify="right" mt="md">
-            <Button type="submit" loading={loading}>
-              Tạo Giao Dịch
+            <Button type="submit" loading={loading} size='md'>
+              Tạo Booking
             </Button>
           </Group>
         </form>

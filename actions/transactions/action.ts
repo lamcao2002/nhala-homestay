@@ -6,8 +6,16 @@ import { startOfDay, endOfDay } from 'date-fns';
 
 export async function createTransaction(data: any) {
   await dbConnect();
-  const { customerName, customerPhone, checkin, checkout, roomIds, amount } = data;
-  const result = await Transaction.create({ customerName, customerPhone, checkin, checkout, roomIds, amount });
+  const { customerName, customerPhone, checkin, checkout, roomIds, amount } =
+    data;
+  const result = await Transaction.create({
+    customerName,
+    customerPhone,
+    checkin,
+    checkout,
+    roomIds,
+    amount
+  });
   return JSON.parse(JSON.stringify(result));
 }
 
@@ -62,9 +70,10 @@ export async function getTransactionsEachRoom(startDate: Date, endDate: Date) {
   return JSON.parse(JSON.stringify(result));
 }
 
-
 // Hàm lấy danh sách giao dịch group theo phòng
 export async function getTransactionsGroupedByRoom(date: Date) {
+  await dbConnect();
+
   const start = startOfDay(date); // 00:00 của ngày được chọn
   const end = endOfDay(date); // 23:59:59 của ngày được chọn
 
@@ -73,9 +82,9 @@ export async function getTransactionsGroupedByRoom(date: Date) {
       $match: {
         $or: [
           { checkin: { $gte: start, $lte: end } }, // Giao dịch có check-in trong ngày
-          { checkout: { $gte: start, $lte: end } }, // Giao dịch có check-out trong ngày
-        ],
-      },
+          { checkout: { $gte: start, $lte: end } } // Giao dịch có check-out trong ngày
+        ]
+      }
     },
     {
       // Tách roomIds để group theo từng phòng
@@ -88,9 +97,9 @@ export async function getTransactionsGroupedByRoom(date: Date) {
       $group: {
         _id: '$roomIds', // Group theo roomId
         transactions: { $push: '$$ROOT' }, // Đẩy toàn bộ giao dịch vào mảng
-        totalAmount: { $sum: '$amount' }, // Tổng doanh thu cho từng phòng
-      },
-    },
+        totalAmount: { $sum: '$amount' } // Tổng doanh thu cho từng phòng
+      }
+    }
     // {
     //   $lookup: {
     //     from: 'rooms', // Tên collection Room trong MongoDB
@@ -114,3 +123,64 @@ export async function getTransactionsGroupedByRoom(date: Date) {
   return JSON.parse(JSON.stringify(result));
 }
 
+// Hàm lấy số lượng giao dịch theo từng ngày trong khoảng thời gian
+export async function getTransactionsCountByDay(
+  startDate: Date,
+  endDate: Date
+) {
+  await dbConnect();
+
+  const start = startOfDay(startDate); // 00:00:00 của startDate
+  const end = endOfDay(endDate); // 23:59:59 của endDate
+
+  const result = await Transaction.aggregate([
+    {
+      $unwind: {
+        path: '$roomIds',
+        preserveNullAndEmptyArrays: true
+      }
+    },
+    {
+      $match: {
+        $or: [
+          { checkin: { $gte: start, $lte: end } }, // Check-in trong khoảng
+          { checkout: { $gte: start, $lte: end } } // Check-out trong khoảng
+        ]
+      }
+    },
+    {
+      $project: {
+        day: {
+          $cond: {
+            if: { $gte: ['$checkin', start] }, // Nếu check-in trong khoảng, lấy ngày check-in
+            then: {
+              $dateToString: {
+                format: '%Y-%m-%d',
+                date: '$checkin',
+                timezone: '+07:00'
+              }
+            },
+            else: {
+              $dateToString: {
+                format: '%Y-%m-%d',
+                date: '$checkout',
+                timezone: '+07:00'
+              }
+            } // Ngược lại, lấy ngày check-out
+          }
+        }
+      }
+    },
+    {
+      $group: {
+        _id: '$day', // Group theo ngày
+        transactionCount: { $sum: 1 } // Đếm số giao dịch mỗi ngày
+      }
+    },
+    {
+      $sort: { _id: 1 } // Sắp xếp theo ngày tăng dần
+    }
+  ]);
+
+  return JSON.parse(JSON.stringify(result));
+}
